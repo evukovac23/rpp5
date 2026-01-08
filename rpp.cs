@@ -477,3 +477,146 @@ public void Test10()
 }
 
 
+
+
+
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using EntitiesLayer;
+using BusinessLogicLayer;
+using G1_BookApp;
+
+namespace UnitTest
+{
+    [TestClass]
+    public class UnitTest1
+    {
+        [TestMethod]
+        public void Test1()
+        {
+            // Arrange
+            var service = new BookService();
+            var book = new Book
+            {
+                ISBN = "1234567890",
+                WeightInGrams = 500,
+                NumOfPages = 100
+            };
+
+            // Act
+            var exception = Assert.ThrowsException<InvalidISBNException>(() =>
+                service.AddBook(book));
+
+            // Assert
+            Assert.AreEqual("ISBN must be 13 digits!", exception.Message);
+        }
+
+        [TestMethod]
+        public void Test2()
+        {
+            // Arrange
+            var service = new BookService();
+            var book = new Book
+            {
+                ISBN = "1234567890123",
+                WeightInGrams = 2500,
+                NumOfPages = 100
+            };
+
+            // Act
+            var exception = Assert.ThrowsException<BookTooHeavyException>(() =>
+                service.AddBook(book));
+
+            // Assert
+            Assert.AreEqual("Book is too heavy!", exception.Message);
+        }
+
+        [TestMethod]
+        public void Test3()
+        {
+            // Arrange
+            var service = new BookService();
+            var book = new Book
+            {
+                ISBN = "1234567890123",
+                WeightInGrams = 500,
+                NumOfPages = -10
+            };
+
+            // Act
+            var rezultat = service.AddBook(book);
+
+            // Assert
+            Assert.IsFalse(rezultat);
+        }
+    }
+}
+
+using DataAccessLayer;
+using EntitiesLayer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BusinessLogicLayer
+{
+    public class BookService
+    {
+        public List<Book> GetBooks()
+        {
+            return (new BookRepository()).GetBooks().AsQueryable().ToList();
+        }
+
+        public Author GetAuthor(Book book)
+        {
+            if(book.Author == null)
+            {
+                throw new EmptyAuthorException("Author is empty!");
+            }
+            return book.Author;
+        }
+
+        public bool AddBook(Book book)
+        {
+            if (book == null)
+            {
+                throw new ArgumentNullException("Book object cannot be empty!");
+            }
+
+            if (book.ISBN.Length != 13)
+            {
+                throw new InvalidISBNException("ISBN must be 13 digits!");
+            }
+
+            if (book.WeightInGrams > 2000)
+            {
+                throw new BookTooHeavyException("Book is too heavy!");
+            }
+
+            if (book.NumOfPages < 0)
+            {
+                return false;
+            }
+
+            (new BookRepository()).AddBook(book);
+            return true;
+        }
+    }
+}
+Izradite jedinične testove za ispod navedene scenarije. Jedinični testovi moraju biti
+imenovani u skladu s dobrom praksom, te slijediti AAA uzorak:
+o Ukoliko pozovemo metodu AddBook klase BookService i proslijedimo objekt
+knjige čiji je ISBN kraći od 13 znakova, očekujemo dobiti iznimku
+InvalidISBNException s porukom „ISBN must be 13 digits!“.
+o Ukoliko pozovemo metodu AddBook klase BookService i proslijedimo objekt
+knjige čiji je WeightInGrams veći od 2000, očekujemo dobiti iznimku
+BookTooHeavyException s porukom „Book is too heavy!“.
+o Ukoliko pozovemo metodu AddBook klase BookService i proslijedimo objekt
+knjige čiji je broj stranica negativan, očekuje se vrijednost „false“ kao rezultat
+poziva metode.
+
+
+
